@@ -1,0 +1,150 @@
+// Funtanillas Belén 1B
+// Segundo Parcial
+/*El objetivo de este proyecto es diseñar un sistema de incendio,
+utilizando Arduino que pueda detectar cambios de temperatura 
+y activar un servo motor en caso de detectar un incendio.
+Además, se mostrará la temperatura actual y la estación del año 
+en un display LCD*/
+
+#include <IRremote.h>
+#include <LiquidCrystal.h>
+#include <Servo.h>
+
+#define pinTemperatura A0
+#define pinIR 11
+#define pinLED1 9
+#define pinLED2 8
+#define pinServo 10
+
+// Seamos los botones que se utilizaran 
+#define botonPower 4278238976
+#define botonEstacion1 4010852096
+#define botonEstacion2 3994140416
+#define botonEstacion3 3977428736
+#define botonEstacion4 3944005376
+
+float umbralTemperatura = 60;  // Umbral de temperatura para detectar incendio
+boolean incendioDetectado = false;  // Variable para indicar si se detectó un incendio
+boolean sistemaActivado = true;  // Variable para indicar si el sistema está activado
+long valor_IR;
+
+// Configuración del display LCD
+LiquidCrystal lcd(7, 6, 5, 4, 3, 2);   // Dirección I2C del display y tamaño de 16x2 caracteres
+
+// Configuración del servo motor
+int anguloInicial = 0;  // Ángulo inicial del servo
+Servo servo;
+
+
+void setup() {
+  Serial.begin(9600);
+  IrReceiver.begin(pinIR, DISABLE_LED_FEEDBACK);
+
+  // Inicialización del display LCD
+  lcd.begin(16, 2);
+
+  // Inicialización del servo motor
+  servo.attach(pinServo, 500, 2500);
+  servo.write(anguloInicial);  // Establecer el ángulo inicial del servo
+
+  // Configuración de los pines de los LEDs
+  pinMode(pinLED1, OUTPUT);
+  pinMode(pinLED2, OUTPUT);
+  digitalWrite(pinLED1, LOW);  // Apagar el LED1 inicialmente
+}
+
+
+void loop() {
+  
+float voltaje = analogRead(A0) * (5.0 / 1023.0);  
+float temperatura = (voltaje - 0.5) * 100.0;  // Convertir el voltaje a temperatura en grados Celsius
+  
+  if(controlRemoto == true) {
+  
+           incendioDetectado = detectarIncendio(umbralTemperatura, temperatura); 
+           if (IrReceiver.decode()) //detecta si el control fue accionado 
+            {	
+             valor_IR = IrReceiver.decodedIRData.decodedRawData;//campuramos el valor del control en una variable 
+             Serial.println(valor_IR);
+             sistemaActivado = procesarControlRemoto(valor_IR, &umbralTemperatura, sistemaActivado);
+
+             IrReceiver.resume();
+           }//fin del if
+
+            if (!sistemaActivado)
+            {
+              escribirLCD(0,1, "Temp: ");
+              lcd.print(temperatura);
+            }
+  }
+}//fin del loop
+
+
+/*############################################ FUNCIONES ####################################*/
+
+bool procesarControlRemoto(long valorIR, float* temperatura_maxima, bool sistemaActivado) {
+	lcd.clear();
+    switch (valorIR) {
+      case botonPower:
+        if (sistemaActivado) {
+          escribirLCD(0, 0, "Sistema activado");
+        } else {
+          escribirLCD(0, 0, "Sistema apagado"); 
+        }
+      sistemaActivado = !sistemaActivado;
+        break;
+      case botonEstacion1:
+       		lcd.clear();
+          escribirLCD(0, 0, "Invierno");
+      		*temperatura_maxima = 40;
+        
+        break;
+      case botonEstacion2:
+        	lcd.clear();
+          escribirLCD(0, 0, "Otonio");
+       		*temperatura_maxima = 45;
+        break;
+      case botonEstacion3:
+       	lcd.clear();
+          escribirLCD(0, 0, "Primavera");
+       		*temperatura_maxima = 50;
+        break;
+      case botonEstacion4:
+       	lcd.clear();
+          escribirLCD(0, 0, "Verano");
+      		*temperatura_maxima = 60;
+       
+        break;
+    }
+  
+  delay(1000);
+  
+  return sistemaActivado;
+}
+
+void escribirLCD(int columna, int fila, const char* mensaje) {
+  lcd.setCursor(columna, fila);  // Establece la posición del cursor en el LCD
+  lcd.print(mensaje);  // Escribe el mensaje en el LCD
+}
+
+void encenderServo(int angulo) {
+  servo.write(angulo);  // Mover el servo 
+}
+bool detectarIncendio(float temperatura_maxima, float temperatura_actual)
+{
+  bool incendioDetectado;
+  if(temperatura_actual >= temperatura_maxima)
+  {
+    incendioDetectado = true; 
+    encenderServo(90);
+    digitalWrite(pinLED1, HIGH);
+    digitalWrite(pinLED2, LOW);
+    
+  } else {
+    incendioDetectado = false;
+    encenderServo(0);
+    digitalWrite(pinLED1, LOW);
+    digitalWrite(pinLED2, HIGH);
+  }
+  return incendioDetectado;
+}
