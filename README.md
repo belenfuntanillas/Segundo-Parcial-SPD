@@ -184,10 +184,10 @@ bool detectarIncendio(float temperatura_maxima, float temperatura_actual)
   }
   return incendioDetectado;
 }
-
+~~~
 # Link al proyecto: 
 [ver proyecto](https://www.tinkercad.com/things/9sF6zoYs6U3-sistema-de-incendio-funtanillas-belen/editel?sharecode=tYOsXitgDvipAEMznWeTKyGyhdqaGUN8Fqw_sZU9nK8)
-~~~
+
 ---
 ### Fuentes
 - [Consejos para documentar](https://www.sohamkamani.com/how-to-write-good-documentation/#architecture-documentation).
