@@ -26,6 +26,7 @@ en un display LCD*/
 float umbralTemperatura = 60;  // Umbral de temperatura para detectar incendio
 boolean incendioDetectado = false;  // Variable para indicar si se detectó un incendio
 boolean sistemaActivado = true;  // Variable para indicar si el sistema está activado
+boolean controlRemoto = true;
 long valor_IR;
 
 // Configuración del display LCD
